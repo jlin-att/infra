@@ -1,0 +1,30 @@
+{
+  "version": "17.3",
+  "ne-mappings": [
+    { "original": "HSS-FE", "dd-name": "vHSS-FE  (W/SC/SE Regions)", "lineno": 45 },
+    { "original": "SBC-BGW (VoLTE)", "dd-name": "vSBC-BGW (VoLTE) (W/SC/SE Regions)", "lineno": 50 },
+    { "original": "SBC-BGW (CVoIP/Softphone)", "dd-name": "vSBC-BGW (CVoIP/Softphone)", "lineno": 55 },
+    { "original": "SOS vSBC-Sig (with Integrated ZTS)", "dd-name": "SOS vSBC-Sig  (with Integrated ZTS)", "lineno": 58 },
+    { "original": "CC/IoT CNCS", "dd-name": "CC/IoT CNCS (NCS Cluster)", "lineno": 66 },
+    { "original": "NTAS/nPRS/nPCM (CVoIP)", "dd-name": "NTAS/nPRS/nPCM (CVoIP) (KSC4 & CLE1 & WNV4)", "lineno": 76 },
+    { "original": "IWSF", "dd-name": "vIWSF", "lineno": 89 },
+    { "original": "NIAM/NACM (Combined CNF)", "dd-name": "NIAM/NACM (Combined CNF) (Chicago & Wayne)", "lineno": 92 },
+    { "original": "NEDR Central Server", "dd-name": "NEDR Central Server (WNV5/WNV7/WNV8)", "lineno": 93 },
+    { "original": "Core NAC (NCS Cluster)", "dd-name": "Core NAC (NCS Cluster) (Sacramento & Windermere)", "lineno": 94 },
+    { "original": "Edge NAC (NCP Edge Cluster)", "dd-name": "Edge NAC (NCP Management Cluster) (Sacramento & Windermere)", "lineno": 100 },
+    { "original": "NIAM/NACM (NCP Edge Cluster)", "dd-name": "NIAM/NACM (Combined CNF) (Sacramento & Windermere)", "lineno": 101 },
+    { "original": "NCOM (NCP Edge Cluster) (Large Custom Profile)", "dd-name": "NCOM (Large Custom Profile)", "lineno": 105 },
+    { "original": "NEDR Central Server (NCP Edge Cluster)", "dd-name": "NEDR Central Server (Production)", "lineno": 107 },
+    { "original": "PNM SDC (NCP Edge Cluster)", "dd-name": "PNM SDC (Production)", "lineno": 108 },
+    { "original": "dMRF (VoLTE & FirstNet)", "dd-name": "dMRF (VoLTE & FirstNet) (SC Region)", "lineno": 124 },
+    { "original": "Presence DB", "dd-name": "Presence DB (UTDB in Clusters 2/4)", "lineno": 133 },
+    { "original": "NetAct", "dd-name": "NetAct (3XL Configuration)", "lineno": 134 },
+    { "original": "UDR Proxy (VoLTE & CVoIP NTAS)", "dd-name": "UDR Proxy (VoLTE NTAS) (Production)", "lineno": 143 },
+    { "original": "UDR BE (VoLTE & CVoIP NTAS)", "dd-name": "UDR BE (VoLTE NTAS) (Production)", "lineno": 144 },
+    { "original": "vPGW", "dd-name": "vPGW (Production)", "lineno": 153 },
+    { "original": "vSDME/SDLA (for vRAR + Migration) (See note)", "dd-name": "vSDME/SDLA (for Revenue Assurance) (2nd Pair)", "lineno": 155 },
+    { "original": "vDRA Service Manager", "dd-name": "vDRA Service Manager (Production)", "lineno": 158 },
+    { "original": "Windows Terminal Server", "dd-name": "Windows Terminal Server (Sacramento & Windermere)", "lineno": 163 },
+    { "original": "EXFO QA (Testing Tool)", "dd-name": "EXFO QA (Testing Tool) (Warrenville Only)", "lineno": 170 }
+  ]
+}
