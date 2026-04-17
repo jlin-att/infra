@@ -5,7 +5,9 @@ Process an Excel (.xlsx) file provided via command line.
 - Locates 'Rack <1-15>' cells within the first 5 rows (spanning 2 merged cols).
 - For each Rack, reads ALL rows below the header in the SECOND column only.
 - Replaces line feeds with spaces in cell values.
-- Counts value occurrences per Rack and per Sheet.
+- Determines U-Size (1, 2, or 3) based on whether a cell is part of a
+  vertically merged range spanning 2 or 3 rows in the same column.
+- Counts value occurrences (by value AND u-size) per Rack and per Sheet.
 - Outputs results in CSV format.
 
 Usage: python script.py <path_to_excel_file>
@@ -19,7 +21,7 @@ import openpyxl
 from collections import defaultdict
 
 
-# Matches "Rack <N>" where N is 1–15 (space optional, case-insensitive)
+# Matches "Rack <N>" where N is 1-15 (space optional, case-insensitive)
 RACK_PATTERN = re.compile(r"^Rack\s*(1[0-5]|[1-9])$", re.IGNORECASE)
 
 
@@ -34,6 +36,21 @@ def get_merged_2col_ranges(sheet) -> list:
         mr for mr in sheet.merged_cells.ranges
         if mr.max_col - mr.min_col == 1
     ]
+
+
+def build_vertical_merge_lookup(sheet, col: int) -> dict:
+    """
+    Build a lookup dict for vertically merged cells in a specific column.
+    Returns: {min_row: span_size} for merged ranges where min_col == max_col == col
+    and the span is exactly 2 or 3 rows.
+    """
+    lookup = {}
+    for mr in sheet.merged_cells.ranges:
+        if mr.min_col == col and mr.max_col == col:
+            span = mr.max_row - mr.min_row + 1
+            if span in (2, 3):
+                lookup[mr.min_row] = span
+    return lookup
 
 
 def find_rack_headers(sheet) -> list:
@@ -68,16 +85,33 @@ def count_values_in_second_col(sheet, rack_info: dict) -> dict:
     """
     Read ALL rows below the rack header, SECOND column of the merge only.
     Normalize line feeds to spaces. Skip empty cells.
-    Returns a dict: {value: count}
+    Determine U-Size:
+      - 3 if the cell is part of a vertical merge spanning 3 rows
+      - 2 if the cell is part of a vertical merge spanning 2 rows
+      - 1 otherwise (single cell, no vertical merge)
+    Returns a dict: {(value, u_size): count}
     """
     data_col  = rack_info["col_end"]
     start_row = rack_info["header_row"] + 1
     counts    = defaultdict(int)
 
-    for row in range(start_row, sheet.max_row + 1):
+    # Build lookup of vertically merged cells (2- or 3-row spans) in this column
+    vmerge_lookup = build_vertical_merge_lookup(sheet, data_col)
+
+    row = start_row
+    while row <= sheet.max_row:
         raw = sheet.cell(row=row, column=data_col).value
         if raw is not None:
-            counts[normalize_value(raw)] += 1
+            val = normalize_value(raw)
+            if row in vmerge_lookup:
+                u_size = vmerge_lookup[row]
+                counts[(val, u_size)] += 1
+                row += u_size  # skip the merged rows
+                continue
+            else:
+                u_size = 1
+                counts[(val, u_size)] += 1
+        row += 1
 
     return dict(counts)
 
@@ -105,7 +139,7 @@ def process_file(filepath: str) -> None:
         wb.close()
         return
 
-    # sheet_summary[sheet_name][rack_label][value] = count
+    # sheet_summary[sheet_name][rack_label][(value, u_size)] = count
     sheet_summary = {}
 
     for sheet_name in matched_sheets:
@@ -130,36 +164,43 @@ def process_file(filepath: str) -> None:
 
     for sheet_name, racks in sheet_summary.items():
 
-        all_values  = sorted({v for counts in racks.values() for v in counts})
+        # Collect all unique (value, u_size) keys across racks
+        all_keys  = sorted({k for counts in racks.values() for k in counts})
         rack_labels = sorted(racks.keys(),
                              key=lambda r: int(re.search(r"\d+", r).group()))
 
         # --- Per-Rack section ---
         writer.writerow([f"Sheet: {sheet_name}"])
-        writer.writerow(["Value"] + rack_labels)
+        writer.writerow(["Value", "U-Size"] + rack_labels)
 
-        for val in all_values:
-            writer.writerow([val] + [racks[rack].get(val, 0) for rack in rack_labels])
+        for val, u_size in all_keys:
+            writer.writerow(
+                [val, u_size] +
+                [racks[rack].get((val, u_size), 0) for rack in rack_labels]
+            )
 
         # Totals row per rack
-        writer.writerow(["TOTAL"] + [sum(racks[rack].values()) for rack in rack_labels])
+        writer.writerow(
+            ["TOTAL", ""] +
+            [sum(racks[rack].values()) for rack in rack_labels]
+        )
 
         # Blank separator
         writer.writerow([])
 
         # --- Per-Sheet aggregate ---
         writer.writerow([f"Sheet Totals: {sheet_name}"])
-        writer.writerow(["Value", "Count"])
+        writer.writerow(["Value", "U-Size", "Count"])
 
         sheet_totals = defaultdict(int)
         for counts in racks.values():
-            for val, cnt in counts.items():
-                sheet_totals[val] += cnt
+            for key, cnt in counts.items():
+                sheet_totals[key] += cnt
 
-        for val in sorted(sheet_totals):
-            writer.writerow([val, sheet_totals[val]])
+        for (val, u_size) in sorted(sheet_totals):
+            writer.writerow([val, u_size, sheet_totals[(val, u_size)]])
 
-        writer.writerow(["TOTAL", sum(sheet_totals.values())])
+        writer.writerow(["TOTAL", "", sum(sheet_totals.values())])
 
         # Blank separator between sheets
         writer.writerow([])
