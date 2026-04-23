@@ -59,3 +59,24 @@ python3 compare-dd.py <file1>.json <file2>.json
 options:
   --output OUTPUT, -o OUTPUT
 ```
+
+## 8) verify CPU Memory limit table
+It is a good idea to verify the CPU memory limit table is consistent between all the sites before we generate the json file for consumption.
+
+```bash
+# this will display discrepencies for all non-lab sites.
+# NOTE, the lab column may move in the future, so this script may need to modified
+python3 verify_limits.py <xlsx file>
+
+options:
+  --show-lab  Display 'diff in lab only' entries (hidden by default)
+```
+
+## 9) generate CPU Memoery limit json file
+You should verify the table first (previous step) before generating this table. This table is for use with cluster design to check on the max limit of the pod/container.  It only use the first limit (from the xlsx sheet) for the output.
+
+```bash
+ python3 generate_limit.py <file>.xlsx
+
+    output: <file>-limit.json
+```
