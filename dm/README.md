@@ -12,7 +12,7 @@ python3 process_deprecation.py <filename>.xlsx
 ```
 
 ## 2) Get network element config (get_config.py)
-Parse the detailed dimensioning sheet and save the configuration to a JSON file. Optionally, you can provide the deprecated file to skip deprecated network elements.
+Parse the detailed dimensioning sheet and save the configuration to a JSON file.
 
 ```bash
 python3 get_config.py <filename>.xlsx
@@ -20,7 +20,34 @@ python3 get_config.py <filename>.xlsx
 # Output:
 # <filename>.json
 ```
+Without "<b>--read-deprecate-json</b>" flag, the output file's status will be "null".
+```
+    {
+      "config_heading": "vCSCF Core (W/SC/SE Regions)",
+      "config_heading_row": 24,
+      "CNF_VNF": "CNF",
+      "subscription_count": 3.6,
+      "status": null,
+    }
+```
 
+Optionally, you can provide the deprecated file to skip deprecated network elements. <b> Note, you must generate the deprecated file first. </b>
+```bash
+python3 get_config.py --read-deprecate-json <filename>.xlsx
+
+# Output:
+# <filename>.json
+```
+Example output with status populated:
+```
+    {
+      "config_heading": "vCSCF Core (W/SC/SE Regions)",
+      "config_heading_row": 24,
+      "CNF_VNF": "CNF",
+      "subscription_count": 3.6,
+      "status": "deprecated",
+    }
+```
 
 ## 3) Retrieve site info / site-templates (process-site.py)
 Retrieve all site-templates.
