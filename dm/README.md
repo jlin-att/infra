@@ -1,4 +1,4 @@
-## Overview
+# Overview
 Process the dimension matrix.
 
 ## 1) Generate a deprecated network element file (`process_deprecation.py`)
@@ -107,3 +107,114 @@ You should verify the table first (previous step) before generating this table. 
 
     output: <file>-limit.json
 ```
+
+# DM intake
+Creating a POC for DM intake.  What we trying to do is introducing a "ATT SKU" to the DM data.
+
+## 1) get the json format of the DM data (preferrably filter out the deprecated data)
+See above for instructions
+
+## 2) map the network element to the "ATT SKU".
+This step is a little involved, but it has nothing to do with instruction here, so i am going to skip it.  Basically, we need to have a json file which contains a list of mappings. the mapping includes "network element", "att sku" and optionally line number of DM.
+
+```bash
+Usage:
+    python3 generate-att-sku.py <input.xlsx> [output.json]
+```
+
+## 3) generate site info
+
+```bash
+python3 generate-site-info.py <file>.xlsx
+
+    output: <file>-siteinfo.json
+```
+Process the sheet "CNF VNF Counts - 172M" and write all NE info into a json formated file.  the file is organized based on site (location) then placement group then Network Element.
+
+Example output:
+```
+[
+  {
+    "site": "Seattle",
+    "Site-Templates": [
+      {
+        "site-template": "Blue Print Group 1",
+        "network_elements": [
+          {
+            "network_element": "CSCF Core",
+            "CNF_VNF": "CNF",
+            "Subs": "3.6",
+            "line": 25,
+            "count": 0
+          },
+        ]
+      }
+  }
+]
+```
+
+The site info includes all network elements.
+
+## 4) generate DM reference from USP Evolution sheet
+
+This step is used to better match the Network Element name from the site-info to the DM's Network Element name.
+
+It records the line number of the reference value for the Network Element (DMrow).
+
+```bash
+python3 generate-usp-evolution.py <file>.xlsx
+
+    output: <file>-usp-evolution.json
+```
+
+Example output:
+```
+[
+  {
+    "site": "Seattle",
+    "Site-Templates": [
+      {
+        "site-template": "Blue Print Group 1",
+        "network_elements": [
+          {
+            "network_element": "vCSCF Core",
+            "CNF_VNF": "CNF",
+            "Subs": "3.6",
+            "line": 25,
+            "DMrow": 24
+          },
+        ]
+      }
+  }
+]
+```
+
+## 5) create a site info with att sku
+
+```bash
+usage: generate-site-sku.py [-h] sku_file site_file evolution_file output_file
+
+positional arguments:
+  sku_file
+  site_file
+  evolution_file
+  output_file
+
+options:
+  -h, --help      show this help message and exit
+```
+
+try to merge sku file with site and evolution data.
+
+## 6) merge sku file with dm file.
+
+```bash
+python3 merge_sku_dm.py 18.1-sku.json dmdata/USP_Evolution_CNF_VNF_Resources_2023TPA_v18.1_VM_AZ_Assignment_e2603.json 18.1-new-dm.json
+```
+
+## 7) now the main event. show us the calculation using sku
+
+```bash
+python3 att-dm-work.py site-with-sku.json 18.1-new-dm.json
+```
+
