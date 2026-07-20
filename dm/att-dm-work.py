@@ -138,13 +138,15 @@ def _to_number(v):
 RESOURCE_FIELDS = ["vcpu", "memory_G", "root_disk_GB", "cinder_gb"]
 
 
-def sum_config_resources(cfg):
+def sum_config_resources(cfg, printall=False):
     """Sum each resource field across all items[] in the config."""
     totals = {f: 0.0 for f in RESOURCE_FIELDS}
     for item in cfg.get("items", []):
-        qty = _to_number(item.get("quantity")) or 1.0  # treat missing/0 qty as 1
+        qty = _to_number(item.get("quantity")) or 0.0  # treat missing/0 qty as 0
         for f in RESOURCE_FIELDS:
             totals[f] += _to_number(item.get(f)) * qty
+            if printall:
+                print (_to_number(item.get(f)),qty,totals[f] )
     return totals
 
 
@@ -165,8 +167,15 @@ def compute_site_totals(site_obj, dm_sku_map):
                   f"(NE='{ne.get('network_element (site)')}')",
                   file=sys.stderr)
             continue
+        '''
+        if sku == "a0cccf00a":
+            print ("found mediation")
+            print (json.dumps(cfg))
+            sys.exit(0)
+        '''
 
         count = _to_number(ne.get("count"))
+        #per_config = sum_config_resources(cfg, sku == "a0cccf00a")
         per_config = sum_config_resources(cfg)
         totals = {f: per_config[f] * count for f in RESOURCE_FIELDS}
 
