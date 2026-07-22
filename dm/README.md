@@ -206,7 +206,7 @@ options:
 
 try to merge sku file with site and evolution data.
 
-## 6) merge sku file with dm file.
+## 6) merge sku file with dm file
 
 ```bash
 python3 merge_sku_dm.py 18.1-sku.json dmdata/USP_Evolution_CNF_VNF_Resources_2023TPA_v18.1_VM_AZ_Assignment_e2603.json 18.1-new-dm.json
@@ -218,3 +218,14 @@ python3 merge_sku_dm.py 18.1-sku.json dmdata/USP_Evolution_CNF_VNF_Resources_202
 python3 att-dm-work.py site-with-sku.json 18.1-new-dm.json
 ```
 
+# DM consumption for current DM
+
+## 1) create simple filterable cnf vnf count file.
+
+use "process_cnf_vnf_counts.py" to convert the "cnf vnf counts" sheet into a csv file.
+
+```bash
+$ python3 process_cnf_vnf_counts.py <xlsx file>
+
+Output: <filename>-cnf-vnf-counts.csv
+```
