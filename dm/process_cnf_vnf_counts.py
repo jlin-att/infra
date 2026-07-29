@@ -3,15 +3,17 @@
 Process a CNF/VNF counts XLSX file and export a flat CSV.
 
 Sheet layout (sheet name: "CNF VNF Counts - 172M"):
-  - Row 23              : "sites" header row. Site names start at column E and
-                          continue to the right for as many columns as exist.
-  - Column A (row 25+)  : "group". These are merged cells that span multiple
+  - Site header row     : auto-detected from row 21, 22, or 23.
+                          Site names start at column E and continue to the
+                          right for as many columns as exist.
+  - Data start row      : detected site header row + 2.
+  - Column A            : "group". These are merged cells that span multiple
                           rows, so the value is forward-filled down the rows.
                           The same group may legitimately reappear later.
-  - Column B (row 25+)  : Network Element name.
-  - Column C (row 25+)  : cnf-vnf.
-  - Column D (row 25+)  : subs.
-  - Columns E.. (row 25+): the count for each site. Non-numeric cells -> 0.
+  - Column B            : Network Element name.
+  - Column C            : cnf-vnf.
+  - Column D            : subs.
+  - Columns E..         : the count for each site. Non-numeric cells -> 0.
 
 Output CSV columns:
   row, group, network element, cnf-vnf, subs, <site 1>, <site 2>, ...
@@ -32,8 +34,7 @@ import sys
 import openpyxl
 
 SHEET_NAME = "CNF VNF Counts - 172M"
-HEADER_ROW = 23          # row that holds the site names
-DATA_START_ROW = 25      # first row of network-element data
+POSSIBLE_HEADER_ROWS = (19, 20, 21, 22, 23)
 FIRST_SITE_COL = 5       # column E (1-based)
 GROUP_COL = 1            # column A
 NE_COL = 2               # column B
@@ -66,6 +67,31 @@ def clean(value):
     if value is None:
         return ""
     return str(value).strip()
+
+
+def detect_site_header_row(ws):
+    """
+    Detect the row that contains site names.
+
+    The site header row can be row 21, 22, or 23. Site names must start at
+    column E. The first candidate row with at least one non-empty value from
+    column E onward is used.
+    """
+    for row in POSSIBLE_HEADER_ROWS:
+        site_values = []
+
+        for col in range(FIRST_SITE_COL, ws.max_column + 1):
+            value = clean(ws.cell(row=row, column=col).value)
+            if value:
+                site_values.append(value)
+
+        if site_values:
+            return row
+
+    raise RuntimeError(
+        "Could not detect site header row. Expected site names on row "
+        "21, 22, or 23 starting from column E."
+    )
 
 
 def main():
@@ -101,16 +127,26 @@ def main():
         )
     ws = wb[args.sheet]
 
-    # --- Read the site headers from the header row (column E onward). ---
+    try:
+        header_row = detect_site_header_row(ws)
+    except RuntimeError as exc:
+        sys.exit(f"ERROR: {exc}")
+
+    data_start_row = header_row + 2
+
+    print(f"Detected site header row: {header_row}")
+    print(f"Detected data start row : {data_start_row}")
+
+    # --- Read the site headers from the detected header row (column E onward). ---
     sites = []          # list of (column_index, site_name)
     for col in range(FIRST_SITE_COL, ws.max_column + 1):
-        name = clean(ws.cell(row=HEADER_ROW, column=col).value)
+        name = clean(ws.cell(row=header_row, column=col).value)
         if name:
             sites.append((col, name))
 
     if not sites:
         sys.exit(
-            f"ERROR: no site headers found on row {HEADER_ROW} "
+            f"ERROR: no site headers found on row {header_row} "
             f"starting at column {FIRST_SITE_COL}."
         )
 
@@ -126,7 +162,7 @@ def main():
             ["row", "group", "network element", "cnf-vnf", "subs"] + site_names
         )
 
-        for row in range(DATA_START_ROW, ws.max_row + 1):
+        for row in range(data_start_row, ws.max_row + 1):
             ne = clean(ws.cell(row=row, column=NE_COL).value)
 
             # Forward-fill the merged "group" cell in column A.
