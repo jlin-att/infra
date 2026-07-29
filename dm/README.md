@@ -218,6 +218,23 @@ python3 merge_sku_dm.py 18.1-sku.json dmdata/USP_Evolution_CNF_VNF_Resources_202
 python3 att-dm-work.py site-with-sku.json 18.1-new-dm.json
 ```
 
+## 8) compare the output of the "att-dm-work.py" to the DM excel sheet
+
+Use the "--output-csv" option to save a copy of the output to a csv file.
+
+```bash
+python3 att-dm-work.py site-with-sku.json 18.1-dm-with-sku.json --output-csv houston-att.csv
+```
+
+then grab a copy of the same site from USP evolution sheet (DM file)
+
+```bash
+python3 process_usp_evolution.py USP_Evolution_CNF_VNF_Resources_2023TPA_v18.1_VM_AZ_Assignment_e2603.xlsx -o houston.csv
+```
+
+compare the output of "houston-att.csv" to "houston.csv".
+
+
 # DM consumption for current DM
 
 ## 1) create simple filterable cnf vnf count file.

@@ -16,6 +16,7 @@ Steps:
 import argparse
 import json
 import sys
+import csv
 
 
 # ---------- io ----------
@@ -218,8 +219,11 @@ def print_site_totals(site_name, rows):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("sitesku_file", help="Merged sitesku JSON (per-site NE list)")
+    ap.add_argument("--output-csv", help="Write site resource output to CSV file")
     ap.add_argument("dm_file", help="DM JSON with ATT SKU merged in")
     args = ap.parse_args()
+
+    csv_rows = []
 
     sitesku_data = load_json(args.sitesku_file)
     dm_data = load_json(args.dm_file)
@@ -240,6 +244,33 @@ def main():
     dm_sku_map = build_dm_sku_map(dm_data)
     total_rows = compute_site_totals(site_obj, dm_sku_map)
     print_site_totals(site_name, total_rows)
+
+    if args.output_csv:
+        for r in total_rows:
+            csv_rows.append([
+                site_name,      # site
+                r[0],           # network_element
+                r[1],           # total vcpu
+                r[2],           # total memory_G
+                r[3],           # total root_disk_GB
+                r[4],           # total cinder_gb
+            ])
+       
+        with open(args.output_csv, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+
+            writer.writerow([
+                "site",
+                "network_element",
+                "total_vcpu",
+                "total_memory_G",
+                "total_root_disk_GB",
+                "total_cinder_gb"
+            ])
+
+            writer.writerows(csv_rows)
+
+        print(f"[INFO] CSV written to {args.output_csv}")      
 
 
 if __name__ == "__main__":
